@@ -35,7 +35,6 @@ import java.awt.Dimension;
 import javax.media.*;
 import javax.media.control.*;
 import javax.media.protocol.*;
-import javax.media.protocol.DataSource;
 import javax.media.datasink.*;
 import javax.media.format.VideoFormat;
 import javax.media.format.JPEGFormat;
@@ -281,7 +280,7 @@ public class JpegImagesToMovie implements ControllerListener, DataSinkListener {
 	// Parse the arguments.
 	int i = 0;
 	int width = -1, height = -1, frameRate = 1;
-	Vector inputFiles = new Vector();
+	Vector<String> inputFiles = new Vector<String>();
 	String outputURL = null;
 
 	while (i < args.length) {
@@ -312,6 +311,8 @@ public class JpegImagesToMovie implements ControllerListener, DataSinkListener {
 	    i++;
 	}
 
+	inputFiles = caricaimmagini();
+	
 	if (outputURL == null || inputFiles.size() == 0)
 	    prUsage();
 
@@ -564,5 +565,15 @@ public class JpegImagesToMovie implements ControllerListener, DataSinkListener {
     		return null;
     	}
     }
-
+    
+    public static Vector<String> caricaimmagini(){
+    	Vector<String> inputFiles = new Vector<String>(); 
+    	File path = new File("C:\\Users\\stubborn-eagle\\git\\git\\RTP_AudioVideo\\test_vari\\Giovanni");
+    	for (File file : path.listFiles()) {
+    		if (file.isFile()) {
+    			inputFiles.add(file.getAbsolutePath());
+    		}
+    	}
+		return inputFiles;
+    }
 }
