@@ -94,8 +94,8 @@ public class TestQuickCamPro
 				// serach for default video device
 				if (captureVideoDevice == null)
 					if (deviceFormat[y] instanceof VideoFormat)
-					if (deviceInfo.getName().indexOf(defaultVideoDeviceName) >= 0)
-				{
+					if (deviceInfo.getName().indexOf(defaultVideoDeviceName) >= 0 ||
+						deviceInfo.getName().startsWith("vfw:")){			            			            
 					captureVideoDevice = deviceInfo;
 					Stdout.log(">>> capture video device = " + deviceInfo.getName());
 				}
@@ -103,11 +103,10 @@ public class TestQuickCamPro
 				// search for default video format
 				if (captureVideoDevice == deviceInfo)
 					if (captureVideoFormat == null)
-					if (DeviceInfo.formatToString(deviceFormat[y]).indexOf(defaultVideoFormatString) >= 0)
-				{
+					//if (DeviceInfo.formatToString(deviceFormat[y]).indexOf(defaultVideoFormatString) >= 0){
 					captureVideoFormat = (VideoFormat) deviceFormat[y];
 					Stdout.log(">>> capture video format = " + DeviceInfo.formatToString(deviceFormat[y]));
-				}
+					//}
 
 				// serach for default audio device
 				if (captureAudioDevice == null)
@@ -195,9 +194,9 @@ public class TestQuickCamPro
 		FileTypeDescriptor outputType = new FileTypeDescriptor(FileTypeDescriptor.MSVIDEO);
 
 		// setup output video and audio data format
-		Format outputFormat[] = new Format[2];
-		outputFormat[0] = new VideoFormat(VideoFormat.INDEO50);
-		outputFormat[1] = new AudioFormat(AudioFormat.GSM_MS /* LINEAR */);
+		Format outputFormat[] = new Format[1];
+		//outputFormat[0] = new VideoFormat(VideoFormat.INDEO50);
+		outputFormat[0] = new AudioFormat(AudioFormat.GSM_MS /* LINEAR */);
 
 		// create processor
 		ProcessorModel processorModel = new ProcessorModel(mixedDataSource, outputFormat, outputType);
@@ -208,7 +207,7 @@ public class TestQuickCamPro
 		}
 		catch (IOException e) { Stdout.logAndAbortException(e); }
 		catch (NoProcessorException e) { Stdout.logAndAbortException(e); }
-		catch (CannotRealizeException e) { Stdout.logAndAbortException(e); }
+		catch (CannotRealizeException e) { e.printStackTrace(); Stdout.logAndAbortException(e); }
 
 		// get the output of the processor
 		DataSource source = processor.getDataOutput();
