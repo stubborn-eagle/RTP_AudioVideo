@@ -28,6 +28,7 @@ package com.stubborneagle.AudioVideoFromWebcam;
  * with some small modifications, this program will work with any USB camera.
  */
 
+import java.awt.Dimension;
 import java.io.*;
 
 import javax.media.*;
@@ -179,9 +180,9 @@ public class TestQuickCamPro
 		DataSource mixedDataSource = null;
 		try
 		{
-			DataSource dArray[] = new DataSource[2];
+			DataSource dArray[] = new DataSource[1];
 			dArray[0] = videoDataSource;
-			dArray[1] = audioDataSource;
+			//dArray[1] = audioDataSource;
 			mixedDataSource = javax.media.Manager.createMergingDataSource(dArray);
 		}
 		catch (IncompatibleSourceException ise) { Stdout.logAndAbortException(ise); }
@@ -191,12 +192,12 @@ public class TestQuickCamPro
 		// ----------------------
 
 		// setup output file format  ->> msvideo
-		FileTypeDescriptor outputType = new FileTypeDescriptor(FileTypeDescriptor.MSVIDEO);
-
+		FileTypeDescriptor outputType = new FileTypeDescriptor(FileTypeDescriptor.RAW);// .MSVIDEO); //MSVIDEO
+		
 		// setup output video and audio data format
 		Format outputFormat[] = new Format[1];
-		//outputFormat[0] = new VideoFormat(VideoFormat.INDEO50);
-		outputFormat[0] = new AudioFormat(AudioFormat.GSM_MS /* LINEAR */);
+		outputFormat[0] = new VideoFormat(VideoFormat.H263);//h263);
+		//outputFormat[1] = new AudioFormat(AudioFormat.LINEAR);// .LINEAR);//.GSM_MS);
 
 		// create processor
 		ProcessorModel processorModel = new ProcessorModel(mixedDataSource, outputFormat, outputType);
@@ -216,6 +217,17 @@ public class TestQuickCamPro
 		// of the file to which bits are to be written
 		MediaLocator dest = new MediaLocator("file:testcam.avi");
 
+		
+		AVTransmit2 avtransmit2 = new AVTransmit2(source, "192.168.120.145", "52040", null);
+		avtransmit2.start();
+		try {
+		    Thread.currentThread().sleep(60000);
+		} catch (InterruptedException ie) {
+		}
+		avtransmit2.stop();
+		System.exit(0);
+		
+		
 		// create a datasink to do the file
 		DataSink dataSink = null;
 		MyDataSinkListener dataSinkListener = null;

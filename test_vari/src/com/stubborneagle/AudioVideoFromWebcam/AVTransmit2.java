@@ -1,3 +1,4 @@
+package com.stubborneagle.AudioVideoFromWebcam;
 /*
  * @(#)AVTransmit2.java	1.4 01/03/13
  *
@@ -31,9 +32,10 @@
 import java.awt.*;
 import java.io.*;
 import java.net.InetAddress;
+import java.net.InetSocketAddress;
+
 import javax.media.*;
 import javax.media.protocol.*;
-import javax.media.protocol.DataSource;
 import javax.media.format.*;
 import javax.media.control.TrackControl;
 import javax.media.control.QualityControl;
@@ -51,6 +53,7 @@ public class AVTransmit2 {
 
     private Processor processor = null;
     private RTPManager rtpMgrs[];
+    private DataSource dataInput = null;
     private DataSource dataOutput = null;
     
     public AVTransmit2(MediaLocator locator,
@@ -59,6 +62,17 @@ public class AVTransmit2 {
 			 Format format) {
 	
 	this.locator = locator;
+	this.ipAddress = ipAddress;
+	Integer integer = Integer.valueOf(pb);
+	if (integer != null)
+	    this.portBase = integer.intValue();
+    }
+    public AVTransmit2(DataSource ds,
+			 String ipAddress,
+			 String pb,
+			 Format format) {
+	
+	this.dataInput = ds;
 	this.ipAddress = ipAddress;
 	Integer integer = Integer.valueOf(pb);
 	if (integer != null)
@@ -111,14 +125,14 @@ public class AVTransmit2 {
     }
 
     private String createProcessor() {
-	if (locator == null)
-	    return "Locator is null";
+//	if (locator == null)
+//	    return "Locator is null";
 
-	DataSource ds;
+	DataSource ds = dataInput;
 	DataSource clone;
 
 	try {
-	    ds = javax.media.Manager.createDataSource(locator);
+	    ds = javax.media.Manager.createDataSource(new MediaLocator("vfw://0"));//locator);
 	} catch (Exception e) {
 	    return "Couldn't create DataSource";
 	}
@@ -235,8 +249,8 @@ public class AVTransmit2 {
 		port = portBase + 2*i;
 		ipAddr = InetAddress.getByName(ipAddress);
 
-		localAddr = new SessionAddress( InetAddress.getLocalHost(),
-						port);
+		//localAddr = new SessionAddress( InetAddress.getLocalHost(),	port);
+		localAddr = new SessionAddress( new InetSocketAddress("192.168.120.1", 52040).getAddress(),	port);
 		
 		destAddr = new SessionAddress( ipAddr, port);
 
