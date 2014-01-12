@@ -53,7 +53,7 @@ public class AVTransmit2 {
 
     private Processor processor = null;
     private RTPManager rtpMgrs[];
-    private DataSource dataInput = null;
+    DataSource mixedDataSource = null;
     private DataSource dataOutput = null;
     
     public AVTransmit2(MediaLocator locator,
@@ -67,17 +67,6 @@ public class AVTransmit2 {
 	if (integer != null)
 	    this.portBase = integer.intValue();
     }
-    public AVTransmit2(DataSource ds,
-			 String ipAddress,
-			 String pb,
-			 Format format) {
-	
-	this.dataInput = ds;
-	this.ipAddress = ipAddress;
-	Integer integer = Integer.valueOf(pb);
-	if (integer != null)
-	    this.portBase = integer.intValue();
-    }
 
     /**
      * Starts the transmission. Returns null if transmission started ok.
@@ -85,6 +74,8 @@ public class AVTransmit2 {
      */
     public synchronized String start() {
 	String result;
+	
+	createDataSources();
 
 	// Create a processor for the specified media locator
 	// and program it to output JPEG/RTP
@@ -124,22 +115,59 @@ public class AVTransmit2 {
 	}
     }
 
+    private void createDataSources(){
+		// setup video data source
+		// -----------------------
+		MediaLocator videoMediaLocator = new MediaLocator("vfw://0");
+		DataSource videoDataSource = null;
+		try
+		{
+			videoDataSource = javax.media.Manager.createDataSource(videoMediaLocator);
+		}
+		catch (IOException ie) { Stdout.logAndAbortException(ie); }
+		catch (NoDataSourceException nse) { Stdout.logAndAbortException(nse); }
+
+		// setup audio data source
+		// -----------------------
+		MediaLocator audioMediaLocator = new MediaLocator("dsound://");
+		DataSource audioDataSource = null;
+		try
+		{
+			audioDataSource = javax.media.Manager.createDataSource(audioMediaLocator);
+		}
+		catch (IOException ie) { Stdout.logAndAbortException(ie); }
+		catch (NoDataSourceException nse) { Stdout.logAndAbortException(nse); }
+
+		// merge the two data sources
+		// --------------------------
+		mixedDataSource = null;
+		try
+		{
+			DataSource dArray[] = new DataSource[2];
+			dArray[0] = videoDataSource;
+			dArray[1] = audioDataSource;
+			mixedDataSource = javax.media.Manager.createMergingDataSource(dArray);
+		}
+		catch (IncompatibleSourceException ise) { Stdout.logAndAbortException(ise); }
+
+
+    }
     private String createProcessor() {
 //	if (locator == null)
 //	    return "Locator is null";
 
-	DataSource ds = dataInput;
+	DataSource ds;
 	DataSource clone;
-
+/*
 	try {
 	    ds = javax.media.Manager.createDataSource(new MediaLocator("vfw://0"));//locator);
 	} catch (Exception e) {
 	    return "Couldn't create DataSource";
 	}
-
+*/
 	// Try to create a processor to handle the input media locator
 	try {
-	    processor = javax.media.Manager.createProcessor(ds);
+	    processor = javax.media.Manager.createProcessor(mixedDataSource);
 	} catch (NoProcessorException npe) {
 	    return "Couldn't create processor";
 	} catch (IOException ioe) {
@@ -208,7 +236,7 @@ public class AVTransmit2 {
 	    return "Couldn't realize processor";
 
 	// Set the JPEG quality to .5.
-	setJPEGQuality(processor, 0.5f);
+	setJPEGQuality(processor, 0.5f);//0.5f);
 
 	// Get the output data source of the processor
 	dataOutput = processor.getDataOutput();
@@ -250,7 +278,7 @@ public class AVTransmit2 {
 		ipAddr = InetAddress.getByName(ipAddress);
 
 		//localAddr = new SessionAddress( InetAddress.getLocalHost(),	port);
-		localAddr = new SessionAddress( new InetSocketAddress("192.168.120.1", 52040).getAddress(),	port);
+		localAddr = new SessionAddress( new InetSocketAddress("192.168.120.1", 52040).getAddress(),	port); 
 		
 		destAddr = new SessionAddress( ipAddr, port);
 
