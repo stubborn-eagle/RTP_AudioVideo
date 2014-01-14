@@ -46,6 +46,7 @@ public class VideoStream extends javax.swing.JFrame
 		label3.setBounds(10,106,60,20);
 		MainPanel.add(ipAddr);
 		ipAddr.setBounds(83,75,143,24);
+		port.setText("52040");
 		MainPanel.add(port);
 		port.setBounds(83,105,71,24);
 		mainLabel.setText("JMF Audio\\Video Streaming");
@@ -100,10 +101,13 @@ public class VideoStream extends javax.swing.JFrame
 		capsendBtn.addActionListener(lSymAction);
 		cancelBtn.addActionListener(lSymAction);
 		listenBtn.addActionListener(lSymAction);
-		//}}
-		
-		//Enum local interfaces		
-		enumNic();
+		streamList.addContainerListener(new ContainerAdapter() {
+			@Override
+			public void componentAdded(ContainerEvent e) {listenBtn.setEnabled(true);}
+			@Override
+			public void componentRemoved(ContainerEvent e) {if(streamList.getModel().getSize() ==0) listenBtn.setEnabled(false);}
+		});
+		enumNic();		
 	}
 
     /**
@@ -264,15 +268,17 @@ public class VideoStream extends javax.swing.JFrame
 		String ip   = ipAddr.getText();
 		String prt  = port.getText();
 
-		if(ip.isEmpty() || prt.isEmpty()){   
+		if(ip.isEmpty() || prt.isEmpty()){     
 			JOptionPane optionPane = new JOptionPane("Insert all parameters", JOptionPane.ERROR_MESSAGE);    
 			JDialog dialog = optionPane.createDialog("Failure");
 			dialog.setAlwaysOnTop(true);
 			dialog.setVisible(true);
 			return;
-		}
-
-		vt = new AVTransmit2(null, comboBox.getSelectedItem().toString(),ipAddr.getText(), prt, null);
+		}		
+		//String ipComboBox = comboBox.getSelectedItem().toString();
+		//String broadcastIP = ipComboBox.substring(0, ipComboBox.lastIndexOf(".")+1) + "255";
+		vt = new AVTransmit2(null, comboBox.getSelectedItem().toString(),ip, prt, null);
+		//vt = new AVTransmit2(null, comboBox.getSelectedItem().toString(),broadcastIP, prt, null);
 		
 		// Start the transmission
 		new Thread()
@@ -284,10 +290,10 @@ public class VideoStream extends javax.swing.JFrame
 				// result will be non-null if there was an error. The return
 				// value is a String describing the possible error. Print it.
 				if (result != null) {
-					System.err.println("Error : " + result);
+					System.out.println("Error : " + result);
 					System.exit(0);
 				}
-				System.err.println("Start transmission for 60 seconds...");
+				System.out.println("Start transmission for 60 seconds...");
 			}
 		}.start();
 
@@ -299,7 +305,7 @@ public class VideoStream extends javax.swing.JFrame
 	    // Stop the transmission
 		if(capsendBtn.isEnabled() == true) return;
 		vt.stop();
-		System.err.println("...transmission ended.");
+		System.out.println("...transmission ended.");
 		Thread.sleep(1000);
 		capsendBtn.setEnabled(true);
 		cancelBtn.setEnabled(false);
@@ -318,13 +324,16 @@ public class VideoStream extends javax.swing.JFrame
 			dialog.setVisible(true);
 			return;
 		}
-		String[] sessions = {ipAddr.getText() + "/" + prt + "/" + "1",ipAddr.getText() + "/" + (Integer.parseInt(prt)+2) + "/" + "1"};
+		//String ipComboBox = comboBox.getSelectedItem().toString();
+		//String broadcastIP = ipComboBox.substring(0, ipComboBox.lastIndexOf(".")+1) + "255";
+		String[] sessions = {ip + "/" + prt + "/" + "1", ip + "/" + (Integer.parseInt(prt)+2) + "/" + "1"};
+		//String[] sessions = {broadcastIP + "/" + prt + "/" + "1",broadcastIP + "/" + (Integer.parseInt(prt)+2) + "/" + "1"};
 		avReceive = new AVReceive2(comboBox.getSelectedItem().toString(), sessions,streamListModel);    	
 		new Thread()
 		{
 			public void run() {
 		    	if (!avReceive.initialize()) {
-		    		System.err.println("Failed to initialize the sessions.");
+		    		System.out.println("Failed to initialize the sessions.");
 		    	}
 			}
 		}.start();

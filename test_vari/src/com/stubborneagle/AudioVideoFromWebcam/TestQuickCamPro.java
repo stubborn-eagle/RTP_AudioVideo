@@ -37,6 +37,8 @@ import javax.media.datasink.*;
 import javax.media.format.*;
 import javax.media.protocol.*;
 
+import com.stubborneagle.videoStreamSample.Stdout;
+
 
 public class TestQuickCamPro
 {
@@ -112,8 +114,7 @@ public class TestQuickCamPro
 				// serach for default audio device
 				if (captureAudioDevice == null)
 					if (deviceFormat[y] instanceof AudioFormat)
-					if (deviceInfo.getName().indexOf(defaultAudioDeviceName) >= 0)
-				{
+					if (deviceInfo.getName().indexOf(defaultAudioDeviceName) >= 0){
 					captureAudioDevice = deviceInfo;
 					Stdout.log(">>> capture audio device = " + deviceInfo.getName());
 				}

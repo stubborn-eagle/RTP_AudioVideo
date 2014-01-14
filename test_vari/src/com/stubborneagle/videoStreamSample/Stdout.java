@@ -1,4 +1,4 @@
-package com.stubborneagle.AudioVideoFromWebcam;
+package com.stubborneagle.videoStreamSample;
 
 /******************************************************
  * File: Stdout.java.java

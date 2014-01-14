@@ -1,33 +1,5 @@
 package com.stubborneagle.videoStreamSample;
-/*
- * @(#)AVReceive2.java	1.3 01/03/13
- *
- * Copyright (c) 1999-2001 Sun Microsystems, Inc. All Rights Reserved.
- *
- * Sun grants you ("Licensee") a non-exclusive, royalty free, license to use,
- * modify and redistribute this software in source and binary code form,
- * provided that i) this copyright notice and license appear on all copies of
- * the software; and ii) Licensee does not utilize the software in a manner
- * which is disparaging to Sun.
- *
- * This software is provided "AS IS," without a warranty of any kind. ALL
- * EXPRESS OR IMPLIED CONDITIONS, REPRESENTATIONS AND WARRANTIES, INCLUDING ANY
- * IMPLIED WARRANTY OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE OR
- * NON-INFRINGEMENT, ARE HEREBY EXCLUDED. SUN AND ITS LICENSORS SHALL NOT BE
- * LIABLE FOR ANY DAMAGES SUFFERED BY LICENSEE AS A RESULT OF USING, MODIFYING
- * OR DISTRIBUTING THE SOFTWARE OR ITS DERIVATIVES. IN NO EVENT WILL SUN OR ITS
- * LICENSORS BE LIABLE FOR ANY LOST REVENUE, PROFIT OR DATA, OR FOR DIRECT,
- * INDIRECT, SPECIAL, CONSEQUENTIAL, INCIDENTAL OR PUNITIVE DAMAGES, HOWEVER
- * CAUSED AND REGARDLESS OF THE THEORY OF LIABILITY, ARISING OUT OF THE USE OF
- * OR INABILITY TO USE SOFTWARE, EVEN IF SUN HAS BEEN ADVISED OF THE
- * POSSIBILITY OF SUCH DAMAGES.
- *
- * This software is not designed or intended for use in on-line control of
- * aircraft, air traffic, aircraft navigation or aircraft communications; or in
- * the design, construction, operation or maintenance of any nuclear
- * facility. Licensee represents and warrants that it will not use or
- * redistribute the Software for such purposes.
- */
+
 
 import java.io.*;
 import java.awt.*;
@@ -89,11 +61,11 @@ public class AVReceive2 implements ReceiveStreamListener, SessionListener, 	Cont
     			try {
     				session = new SessionLabel(sessions[i]);
     			} catch (IllegalArgumentException e) {
-    				System.err.println("Failed to parse the session address given: " + sessions[i]);
+    				System.out.println("Failed to parse the session address given: " + sessions[i]);
     				return false;
     			}
 
-    			System.err.println("  - Open RTP session for: addr: " + session.addr + " port: " + session.port + " ttl: " + session.ttl);
+    			System.out.println("  - Open RTP session for: addr: " + session.addr + " port: " + session.port + " ttl: " + session.ttl);
 
     			mgrs[i] = (RTPManager) RTPManager.newInstance();
     			mgrs[i].addSessionListener(this);
@@ -126,7 +98,7 @@ public class AVReceive2 implements ReceiveStreamListener, SessionListener, 	Cont
     		}
 
     	} catch (Exception e){
-    		System.err.println("Cannot create the RTP Session: " + e.getMessage());
+    		System.out.println("Cannot create the RTP Session: " + e.getMessage());
     		return false;
     	}
 
@@ -137,16 +109,16 @@ public class AVReceive2 implements ReceiveStreamListener, SessionListener, 	Cont
 
     	try{
     		synchronized (dataSync) {
-    			while (!dataReceived && System.currentTimeMillis() - then < waitingPeriod) {
+    			while (!dataReceived){ // && System.currentTimeMillis() - then < waitingPeriod) {
     				if (!dataReceived)
-    					System.err.println("  - Waiting for RTP data to arrive...");
+    					System.out.println("  - Waiting for RTP data to arrive...");
     				dataSync.wait(1000);
     			}
     		}
     	} catch (Exception e) {}
 
     	if (!dataReceived) {
-    		System.err.println("No RTP data was received.");
+    		System.out.println("No RTP data was received.");
     		close();
     		return false;
     	}
@@ -210,7 +182,7 @@ public class AVReceive2 implements ReceiveStreamListener, SessionListener, 	Cont
     public synchronized void update(SessionEvent evt) {
     	if (evt instanceof NewParticipantEvent) {
     		Participant p = ((NewParticipantEvent)evt).getParticipant();
-    		System.err.println("  - A new participant had just joined: " + p.getCNAME());
+    		System.out.println("  - A new participant had just joined: " + p.getCNAME());
     	}
     }
 
@@ -226,8 +198,8 @@ public class AVReceive2 implements ReceiveStreamListener, SessionListener, 	Cont
 
     	if (evt instanceof RemotePayloadChangeEvent) {
 
-    		System.err.println("  - Received an RTP PayloadChangeEvent.");
-    		System.err.println("Sorry, cannot handle payload change.");
+    		System.out.println("  - Received an RTP PayloadChangeEvent.");
+    		System.out.println("Sorry, cannot handle payload change.");
     		System.exit(0);
 
     	}
@@ -241,14 +213,14 @@ public class AVReceive2 implements ReceiveStreamListener, SessionListener, 	Cont
     			// Find out the formats.
     			RTPControl ctl = (RTPControl)ds.getControl("javax.media.rtp.RTPControl");
     			if (ctl != null){
-    				System.err.println("  - Recevied new RTP stream: " + ctl.getFormat());
+    				System.out.println("  - Recevied new RTP stream: " + ctl.getFormat());
     			} else
-    				System.err.println("  - Recevied new RTP stream");
+    				System.out.println("  - Recevied new RTP stream");
 
     			if (participant == null)
-    				System.err.println("      The sender of this stream had yet to be identified.");
+    				System.out.println("      The sender of this stream had yet to be identified.");
     			else {
-    				System.err.println("      The stream comes from: " + participant.getCNAME());
+    				System.out.println("      The stream comes from: " + participant.getCNAME());
         			
     				streamListModel.addElement(participant.getCNAME());
         			streamList.add(ds);
@@ -271,7 +243,7 @@ public class AVReceive2 implements ReceiveStreamListener, SessionListener, 	Cont
     			}
 
     		} catch (Exception e) {
-    			System.err.println("NewReceiveStreamEvent exception " + e.getMessage());
+    			System.out.println("NewReceiveStreamEvent exception " + e.getMessage());
     			return;
     		}
 
@@ -283,10 +255,10 @@ public class AVReceive2 implements ReceiveStreamListener, SessionListener, 	Cont
     			DataSource ds = stream.getDataSource();
     			// Find out the formats.
     			RTPControl ctl = (RTPControl)ds.getControl("javax.media.rtp.RTPControl");
-    			System.err.println("  - The previously unidentified stream ");
+    			System.out.println("  - The previously unidentified stream ");
     			if (ctl != null)
-    				System.err.println("      " + ctl.getFormat());
-    			System.err.println("      had now been identified as sent by: " + participant.getCNAME());
+    				System.out.println("      " + ctl.getFormat());
+    			System.out.println("      had now been identified as sent by: " + participant.getCNAME());
     			
     			streamListModel.addElement(participant.getCNAME());
     			streamList.add(ds);
@@ -295,7 +267,7 @@ public class AVReceive2 implements ReceiveStreamListener, SessionListener, 	Cont
 
 	else if (evt instanceof ByeEvent) {
 
-	     System.err.println("  - Got \"bye\" from: " + participant.getCNAME());
+	     System.out.println("  - Got \"bye\" from: " + participant.getCNAME());
 	     PlayerWindow pw = find(stream);
 	     if(stream.getParticipant()!= null){
 	    	 int elementId = streamListModel.indexOf(stream.getParticipant().getCNAME());
@@ -327,7 +299,7 @@ public class AVReceive2 implements ReceiveStreamListener, SessionListener, 	Cont
     		PlayerWindow pw = find(p);
     		if (pw == null) {
     			// Some strange happened.
-    			System.err.println("Internal error!");
+    			System.out.println("Internal error!");
     			System.exit(-1);
     		}
     		pw.initialize();
@@ -342,7 +314,7 @@ public class AVReceive2 implements ReceiveStreamListener, SessionListener, 	Cont
     			pw.close();	
     			playerWindows.removeElement(pw);
     		}
-    		System.err.println("AVReceive2 internal error: " + ce);
+    		System.out.println("AVReceive2 internal error: " + ce);
     	}
     }
 
@@ -490,7 +462,7 @@ public class AVReceive2 implements ReceiveStreamListener, SessionListener, 	Cont
 //
 //    	AVReceive2 avReceive = new AVReceive2(argv);
 //    	if (!avReceive.initialize()) {
-//    		System.err.println("Failed to initialize the sessions.");
+//    		System.out.println("Failed to initialize the sessions.");
 //    		System.exit(-1);
 //    	}
 //
@@ -500,13 +472,13 @@ public class AVReceive2 implements ReceiveStreamListener, SessionListener, 	Cont
 //    			Thread.sleep(1000);
 //    	} catch (Exception e) {}
 //
-//    	System.err.println("Exiting AVReceive2");
+//    	System.out.println("Exiting AVReceive2");
     }
 
 
     static void prUsage() {
-	System.err.println("Usage: AVReceive2 <session> <session> ...");
-	System.err.println("     <session>: <address>/<port>/<ttl>");
+	System.out.println("Usage: AVReceive2 <session> <session> ...");
+	System.out.println("     <session>: <address>/<port>/<ttl>");
 	System.exit(0);
     }
 

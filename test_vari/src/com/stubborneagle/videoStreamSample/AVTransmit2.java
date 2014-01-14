@@ -33,6 +33,9 @@ import java.awt.*;
 import java.io.*;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import javax.media.*;
 import javax.media.protocol.*;
@@ -42,7 +45,9 @@ import javax.media.control.QualityControl;
 import javax.media.rtp.*;
 import javax.media.rtp.rtcp.*;
 
-import com.stubborneagle.AudioVideoFromWebcam.Stdout;
+import sun.dc.pr.PathStroker;
+
+import com.stubborneagle.AudioVideoFromWebcam.DeviceInfo;
 import com.sun.media.rtp.*;
 
 public class AVTransmit2 {
@@ -121,9 +126,77 @@ public class AVTransmit2 {
     }
 
     private void createDataSources(){
+    	//copy the jmf.properties
+//    	String programFolder=null;
+//    	programFolder = System.getenv("PROGRAMFILES(x86)");
+//    	if(programFolder == null){
+//    		programFolder = System.getenv("PROGRAMFILES");
+//    	}
+//    	Path propFileS = Paths.get(programFolder, "JMF2.1.1e", "lib", "jmf.properties");    
+//    	Path propFileD = Paths.get(".", "jmf.properties");
+//    	System.out.println(propFileS.toString());
+//    	System.out.println(propFileD.toString());
+//    	try {
+//			Files.copy(propFileS, propFileD,  java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+//		} catch (IOException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//			System.out.println(e.getMessage());
+//		}
+    	
+    	
+    	String	defaultAudioDeviceName = "DirectSoundCapture";
+    	CaptureDeviceInfo	captureVideoDevice = null;
+    	CaptureDeviceInfo	captureAudioDevice = null;
+    	// get a list of all media devices, search default devices and formats, and print it out if args[x] = "-dd"
+    	// --------------------------------------------------------------------------------------------------------
+
+    	Stdout.log("get list of all media devices ...");
+    	java.util.Vector deviceListVector = CaptureDeviceManager.getDeviceList(null);
+    	if (deviceListVector == null)
+    	{
+    		Stdout.log("... error: media device list vector is null, program aborted");
+    		System.exit(0);
+    	}
+    	if (deviceListVector.size() == 0)
+    	{
+    		Stdout.log("... error: media device list vector size is 0, program aborted");
+    		System.exit(0);
+    	}
+
+    	for (int x = 0; x < deviceListVector.size(); x++)
+    	{
+    		// display device name
+    		CaptureDeviceInfo deviceInfo = (CaptureDeviceInfo) deviceListVector.elementAt(x);
+    		String deviceInfoText = deviceInfo.getName();
+
+    		// display device formats
+    		Format deviceFormat[] = deviceInfo.getFormats();
+    		for (int y = 0; y < deviceFormat.length; y++)
+    		{
+    			// search for default video device
+    			if (captureVideoDevice == null){
+    				if (deviceFormat[y] instanceof VideoFormat){
+    					if (deviceInfo.getName().startsWith("vfw:")){			            			            
+    						captureVideoDevice = deviceInfo;
+    						Stdout.log(">>> capture video device = " + deviceInfo.getName());
+    					}
+    				}
+    			}
+    			// search for default audio device
+    			if (captureAudioDevice == null || captureAudioDevice.getName().indexOf(defaultAudioDeviceName) == -1  ){
+    				if (deviceFormat[y] instanceof AudioFormat){
+						captureAudioDevice = deviceInfo;
+						Stdout.log(">>> capture audio device = " + deviceInfo.getName());
+    				}
+    			}
+    		}
+    	}
+
 		// setup video data source
 		// -----------------------
-		MediaLocator videoMediaLocator = new MediaLocator("vfw://0");
+    	if(captureVideoDevice==null){System.out.println("No video device found"); System.exit(0);}
+		MediaLocator videoMediaLocator = captureVideoDevice.getLocator();// new MediaLocator("vfw://0");
 		DataSource videoDataSource = null;
 		try
 		{
@@ -134,7 +207,8 @@ public class AVTransmit2 {
 
 		// setup audio data source
 		// -----------------------
-		MediaLocator audioMediaLocator = new MediaLocator("dsound://");
+		if(captureAudioDevice==null){System.out.println("No audio device found"); System.exit(0);}
+		MediaLocator audioMediaLocator = captureAudioDevice.getLocator();//new MediaLocator("dsound://");
 		DataSource audioDataSource = null;
 		try
 		{
@@ -221,8 +295,8 @@ public class AVTransmit2 {
 		    } else
 			chosen = supported[0];
 		    tracks[i].setFormat(chosen);
-		    System.err.println("Track " + i + " is set to transmit as:");
-		    System.err.println("  " + chosen);
+		    System.out.println("Track " + i + " is set to transmit as:");
+		    System.out.println("  " + chosen);
 		    atLeastOneTrack = true;
 		} else
 		    tracks[i].setEnabled(false);
@@ -283,7 +357,7 @@ public class AVTransmit2 {
 		
 		rtpMgrs[i].addTarget( destAddr);
 		
-		System.err.println( "Created RTP session: " + ipAddressRemote + " " + port);
+		System.out.println( "Created RTP session: " + ipAddressRemote + " " + port);
 		
 		sendStream = rtpMgrs[i].createSendStream(dataOutput, i);		
 		sendStream.start();
@@ -366,7 +440,7 @@ public class AVTransmit2 {
 			if (fmts[j].matches(jpegFmt)) {
 			    qc = (QualityControl)cs[i];
 	    		    qc.setQuality(val);
-			    System.err.println("- Setting quality to " + 
+			    System.out.println("- Setting quality to " + 
 					val + " on " + qc);
 			    break;
 			}
@@ -473,11 +547,11 @@ public class AVTransmit2 {
 	// result will be non-null if there was an error. The return
 	// value is a String describing the possible error. Print it.
 	if (result != null) {
-	    System.err.println("Error : " + result);
+	    System.out.println("Error : " + result);
 	    System.exit(0);
 	}
 	
-	System.err.println("Start transmission for 60 seconds...");
+	System.out.println("Start transmission for 60 seconds...");
 
 	// Transmit for 60 seconds and then close the processor
 	// This is a safeguard when using a capture data source
@@ -493,19 +567,19 @@ public class AVTransmit2 {
 	// Stop the transmission
 	at.stop();
 	
-	System.err.println("...transmission ended.");
+	System.out.println("...transmission ended.");
 
 	System.exit(0);
     }
 
 
     static void prUsage() {
-	System.err.println("Usage: AVTransmit2 <sourceURL> <destIP> <destPortBase>");
-	System.err.println("     <sourceURL>: input URL or file name");
-	System.err.println("     <destIP>: multicast, broadcast or unicast IP address for the transmission");
-	System.err.println("     <destPortBase>: network port numbers for the transmission.");
-	System.err.println("                     The first track will use the destPortBase.");
-	System.err.println("                     The next track will use destPortBase + 2 and so on.\n");
+	System.out.println("Usage: AVTransmit2 <sourceURL> <destIP> <destPortBase>");
+	System.out.println("     <sourceURL>: input URL or file name");
+	System.out.println("     <destIP>: multicast, broadcast or unicast IP address for the transmission");
+	System.out.println("     <destPortBase>: network port numbers for the transmission.");
+	System.out.println("                     The first track will use the destPortBase.");
+	System.out.println("                     The next track will use destPortBase + 2 and so on.\n");
 	System.exit(0);
     }
 }

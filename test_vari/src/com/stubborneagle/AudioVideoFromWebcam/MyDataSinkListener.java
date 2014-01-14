@@ -8,6 +8,8 @@ package com.stubborneagle.AudioVideoFromWebcam;
 
 import javax.media.datasink.*;
 
+import com.stubborneagle.videoStreamSample.Stdout;
+
 
 public class MyDataSinkListener implements DataSinkListener
 {
