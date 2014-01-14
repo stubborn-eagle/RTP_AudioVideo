@@ -32,7 +32,7 @@ public class VideoStream extends javax.swing.JFrame
 		setTitle("JPEG\\RTP VideoChat");
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		getContentPane().setLayout(new BorderLayout(0,0));
-		setSize(294,248);
+		setSize(533,248);
 		setVisible(false);
 		MainPanel.setToolTipText("Enter the url , file or the sound source name here");
 		MainPanel.setLayout(null);
@@ -53,20 +53,21 @@ public class VideoStream extends javax.swing.JFrame
 		MainPanel.add(mainLabel);
 		mainLabel.setForeground(Color.BLACK);
 		mainLabel.setFont(new Font("Arial", Font.PLAIN, 20));
-		mainLabel.setBounds(0,10,278,24);
+		mainLabel.setBounds(139,10,278,24);
 		capsendBtn.setLabel("Capture & Send");
 		MainPanel.add(capsendBtn);
 		capsendBtn.setBackground(java.awt.Color.lightGray);
 		capsendBtn.setForeground(Color.BLACK);
 		capsendBtn.setFont(new Font("Dialog", Font.PLAIN, 12));
-		capsendBtn.setBounds(21,142,118,28);
+		capsendBtn.setBounds(10,142,118,28);
 		cancelBtn.setEnabled(false);
 		cancelBtn.setLabel("Cancel Tranmission");
 		MainPanel.add(cancelBtn);
 		cancelBtn.setBackground(java.awt.Color.lightGray);
 		cancelBtn.setForeground(Color.BLACK);
 		cancelBtn.setFont(new Font("Dialog", Font.PLAIN, 12));
-		cancelBtn.setBounds(155,142,118,28);
+		cancelBtn.setBounds(142,142,118,28);
+
 			
 		comboBox.setBounds(83, 48, 143, 24);
 		MainPanel.add(comboBox);
@@ -80,8 +81,12 @@ public class VideoStream extends javax.swing.JFrame
 		listenBtn.setForeground(Color.BLACK);
 		listenBtn.setFont(new Font("Dialog", Font.PLAIN, 12));
 		listenBtn.setBackground(Color.LIGHT_GRAY);
-		listenBtn.setBounds(83, 176, 143, 28);
+		listenBtn.setBounds(333, 142, 143, 28);
 		MainPanel.add(listenBtn);
+		
+		streamList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		streamList.setBounds(293, 44, 224, 82);		
+		MainPanel.add(streamList);
 		//}}
 
 		//{{INIT_MENUS
@@ -95,9 +100,10 @@ public class VideoStream extends javax.swing.JFrame
 		capsendBtn.addActionListener(lSymAction);
 		cancelBtn.addActionListener(lSymAction);
 		listenBtn.addActionListener(lSymAction);
-		
-		enumNic();
 		//}}
+		
+		//Enum local interfaces		
+		enumNic();
 	}
 
     /**
@@ -178,8 +184,10 @@ public class VideoStream extends javax.swing.JFrame
 	java.awt.Label mainLabel = new java.awt.Label();
 	java.awt.Button capsendBtn = new java.awt.Button();
 	java.awt.Button cancelBtn = new java.awt.Button();
-	JComboBox comboBox = new JComboBox();	
+	JComboBox<String> comboBox = new JComboBox<String>();	
 	Button listenBtn = new Button();
+	DefaultListModel<String> streamListModel = new DefaultListModel<String>();
+	JList<String> streamList = new JList<String>(streamListModel);
 	AVTransmit2 vt;
 	AVReceive2 avReceive;
 	//}}
@@ -310,15 +318,13 @@ public class VideoStream extends javax.swing.JFrame
 			dialog.setVisible(true);
 			return;
 		}
-
 		String[] sessions = {ipAddr.getText() + "/" + prt + "/" + "1",ipAddr.getText() + "/" + (Integer.parseInt(prt)+2) + "/" + "1"};
-		avReceive = new AVReceive2(comboBox.getSelectedItem().toString(), sessions);    	
+		avReceive = new AVReceive2(comboBox.getSelectedItem().toString(), sessions,streamListModel);    	
 		new Thread()
 		{
 			public void run() {
 		    	if (!avReceive.initialize()) {
 		    		System.err.println("Failed to initialize the sessions.");
-		    		System.exit(-1);
 		    	}
 			}
 		}.start();
@@ -335,5 +341,4 @@ public class VideoStream extends javax.swing.JFrame
         	}
         }
 	}
-
 }

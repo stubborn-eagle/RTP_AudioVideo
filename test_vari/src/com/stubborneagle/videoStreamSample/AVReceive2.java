@@ -45,6 +45,9 @@ import javax.media.format.VideoFormat;
 import javax.media.Format;
 import javax.media.format.FormatChangeEvent;
 import javax.media.control.BufferControl;
+import javax.swing.DefaultListModel;
+import javax.swing.JList;
+import javax.swing.ListModel;
 
 
 /**
@@ -55,14 +58,17 @@ public class AVReceive2 implements ReceiveStreamListener, SessionListener, 	Cont
     RTPManager mgrs[] = null;
     Vector playerWindows = null;
     String localIP;
+    DefaultListModel<String> streamListModel;
+    Vector<DataSource> streamList = new Vector<DataSource>();
     
     boolean dataReceived = false;
     Object dataSync = new Object();
 
 
-    public AVReceive2(String _localIP, String sessions[]) {
-    	localIP = _localIP;
-    	this.sessions = sessions;
+    public AVReceive2(String _localIP, String _sessions[], DefaultListModel<String> _streamListModel) {
+    	this.localIP = _localIP;
+    	this.streamListModel = _streamListModel;
+    	this.sessions = _sessions;
     }
 
     protected boolean initialize() {
@@ -202,10 +208,10 @@ public class AVReceive2 implements ReceiveStreamListener, SessionListener, 	Cont
      * SessionListener.
      */
     public synchronized void update(SessionEvent evt) {
-	if (evt instanceof NewParticipantEvent) {
-	    Participant p = ((NewParticipantEvent)evt).getParticipant();
-	    System.err.println("  - A new participant had just joined: " + p.getCNAME());
-	}
+    	if (evt instanceof NewParticipantEvent) {
+    		Participant p = ((NewParticipantEvent)evt).getParticipant();
+    		System.err.println("  - A new participant had just joined: " + p.getCNAME());
+    	}
     }
 
 
@@ -242,9 +248,12 @@ public class AVReceive2 implements ReceiveStreamListener, SessionListener, 	Cont
     			if (participant == null)
     				System.err.println("      The sender of this stream had yet to be identified.");
     			else {
-    				System.err.println("      The stream comes from: " + participant.getCNAME()); 
+    				System.err.println("      The stream comes from: " + participant.getCNAME());
+        			
+    				streamListModel.addElement(participant.getCNAME());
+        			streamList.add(ds);
     			}
-
+    			
     			// create a player by passing datasource to the Media Manager
     			Player p = javax.media.Manager.createPlayer(ds);
     			if (p == null)
@@ -278,6 +287,9 @@ public class AVReceive2 implements ReceiveStreamListener, SessionListener, 	Cont
     			if (ctl != null)
     				System.err.println("      " + ctl.getFormat());
     			System.err.println("      had now been identified as sent by: " + participant.getCNAME());
+    			
+    			streamListModel.addElement(participant.getCNAME());
+    			streamList.add(ds);
     		}
     	}
 
@@ -285,6 +297,13 @@ public class AVReceive2 implements ReceiveStreamListener, SessionListener, 	Cont
 
 	     System.err.println("  - Got \"bye\" from: " + participant.getCNAME());
 	     PlayerWindow pw = find(stream);
+	     if(stream.getParticipant()!= null){
+	    	 int elementId = streamListModel.indexOf(stream.getParticipant().getCNAME());
+	    	 if(elementId!= -1){
+	    		 streamListModel.remove(elementId);
+	    		 streamList.remove(elementId);
+	    	 }
+	     }
 	     if (pw != null) {
 		pw.close();
 		playerWindows.removeElement(pw);
@@ -298,37 +317,34 @@ public class AVReceive2 implements ReceiveStreamListener, SessionListener, 	Cont
      * ControllerListener for the Players.
      */
     public synchronized void controllerUpdate(ControllerEvent ce) {
+    	Player p = (Player)ce.getSourceController();
 
-	Player p = (Player)ce.getSourceController();
+    	if (p == null)
+    		return;
 
-	if (p == null)
-	    return;
+    	// Get this when the internal players are realized.
+    	if (ce instanceof RealizeCompleteEvent) {
+    		PlayerWindow pw = find(p);
+    		if (pw == null) {
+    			// Some strange happened.
+    			System.err.println("Internal error!");
+    			System.exit(-1);
+    		}
+    		pw.initialize();
+    		pw.setVisible(true);
+    		p.start();
+    	}
 
-	// Get this when the internal players are realized.
-	if (ce instanceof RealizeCompleteEvent) {
-	    PlayerWindow pw = find(p);
-	    if (pw == null) {
-		// Some strange happened.
-		System.err.println("Internal error!");
-		System.exit(-1);
-	    }
-	    pw.initialize();
-	    pw.setVisible(true);
-	    p.start();
-	}
-
-	if (ce instanceof ControllerErrorEvent) {
-	    p.removeControllerListener(this);
-	    PlayerWindow pw = find(p);
-	    if (pw != null) {
-		pw.close();	
-		playerWindows.removeElement(pw);
-	    }
-	    System.err.println("AVReceive2 internal error: " + ce);
-	}
-
+    	if (ce instanceof ControllerErrorEvent) {
+    		p.removeControllerListener(this);
+    		PlayerWindow pw = find(p);
+    		if (pw != null) {
+    			pw.close();	
+    			playerWindows.removeElement(pw);
+    		}
+    		System.err.println("AVReceive2 internal error: " + ce);
+    	}
     }
-
 
     /**
      * A utility class to parse the session addresses.
