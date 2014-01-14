@@ -1,4 +1,4 @@
-package com.stubborneagle.AudioVideoFromWebcam;
+package com.stubborneagle.videoStreamSample;
 /*
  * @(#)AVReceive2.java	1.3 01/03/13
  *
@@ -54,13 +54,15 @@ public class AVReceive2 implements ReceiveStreamListener, SessionListener, 	Cont
     String sessions[] = null;
     RTPManager mgrs[] = null;
     Vector playerWindows = null;
-
+    String localIP;
+    
     boolean dataReceived = false;
     Object dataSync = new Object();
 
 
-    public AVReceive2(String sessions[]) {
-	this.sessions = sessions;
+    public AVReceive2(String _localIP, String sessions[]) {
+    	localIP = _localIP;
+    	this.sessions = sessions;
     }
 
     protected boolean initialize() {
@@ -102,7 +104,7 @@ public class AVReceive2 implements ReceiveStreamListener, SessionListener, 	Cont
     						session.port,
     						session.ttl);
     			} else {
-    				localAddr= new SessionAddress( new InetSocketAddress("192.168.120.145", 52040).getAddress(),	session.port); // InetAddress.getLocalHost()
+    				localAddr= new SessionAddress( new InetSocketAddress(localIP, 52040).getAddress(),	session.port); // InetAddress.getLocalHost()
     				destAddr = new SessionAddress( ipAddr, session.port);
     			}
 
@@ -212,72 +214,72 @@ public class AVReceive2 implements ReceiveStreamListener, SessionListener, 	Cont
      */
     public synchronized void update( ReceiveStreamEvent evt) {
 
-	RTPManager mgr = (RTPManager)evt.getSource();
-	Participant participant = evt.getParticipant();	// could be null.
-	ReceiveStream stream = evt.getReceiveStream();  // could be null.
+    	RTPManager mgr = (RTPManager)evt.getSource();
+    	Participant participant = evt.getParticipant();	// could be null.
+    	ReceiveStream stream = evt.getReceiveStream();  // could be null.
 
-	if (evt instanceof RemotePayloadChangeEvent) {
-     
-	    System.err.println("  - Received an RTP PayloadChangeEvent.");
-	    System.err.println("Sorry, cannot handle payload change.");
-	    System.exit(0);
+    	if (evt instanceof RemotePayloadChangeEvent) {
 
-	}
-    
-	else if (evt instanceof NewReceiveStreamEvent) {
+    		System.err.println("  - Received an RTP PayloadChangeEvent.");
+    		System.err.println("Sorry, cannot handle payload change.");
+    		System.exit(0);
 
-	    try {
-		stream = ((NewReceiveStreamEvent)evt).getReceiveStream();
-		DataSource ds = stream.getDataSource();
+    	}
 
-		// Find out the formats.
-		RTPControl ctl = (RTPControl)ds.getControl("javax.media.rtp.RTPControl");
-		if (ctl != null){
-		    System.err.println("  - Recevied new RTP stream: " + ctl.getFormat());
-		} else
-		    System.err.println("  - Recevied new RTP stream");
+    	else if (evt instanceof NewReceiveStreamEvent) {
 
-		if (participant == null)
-		    System.err.println("      The sender of this stream had yet to be identified.");
-		else {
-		    System.err.println("      The stream comes from: " + participant.getCNAME()); 
-		}
+    		try {
+    			stream = ((NewReceiveStreamEvent)evt).getReceiveStream();
+    			DataSource ds = stream.getDataSource();
 
-		// create a player by passing datasource to the Media Manager
-		Player p = javax.media.Manager.createPlayer(ds);
-		if (p == null)
-		    return;
+    			// Find out the formats.
+    			RTPControl ctl = (RTPControl)ds.getControl("javax.media.rtp.RTPControl");
+    			if (ctl != null){
+    				System.err.println("  - Recevied new RTP stream: " + ctl.getFormat());
+    			} else
+    				System.err.println("  - Recevied new RTP stream");
 
-		p.addControllerListener(this);
-		p.realize();
-		PlayerWindow pw = new PlayerWindow(p, stream);
-		playerWindows.addElement(pw);
+    			if (participant == null)
+    				System.err.println("      The sender of this stream had yet to be identified.");
+    			else {
+    				System.err.println("      The stream comes from: " + participant.getCNAME()); 
+    			}
 
-		// Notify intialize() that a new stream had arrived.
-		synchronized (dataSync) {
-		    dataReceived = true;
-		    dataSync.notifyAll();
-		}
+    			// create a player by passing datasource to the Media Manager
+    			Player p = javax.media.Manager.createPlayer(ds);
+    			if (p == null)
+    				return;
 
-	    } catch (Exception e) {
-		System.err.println("NewReceiveStreamEvent exception " + e.getMessage());
-		return;
-	    }
-        
-	}
+    			p.addControllerListener(this);
+    			p.realize();
+    			PlayerWindow pw = new PlayerWindow(p, stream);
+    			playerWindows.addElement(pw);
 
-	else if (evt instanceof StreamMappedEvent) {
+    			// Notify intialize() that a new stream had arrived.
+    			synchronized (dataSync) {
+    				dataReceived = true;
+    				dataSync.notifyAll();
+    			}
 
-	     if (stream != null && stream.getDataSource() != null) {
-		DataSource ds = stream.getDataSource();
-		// Find out the formats.
-		RTPControl ctl = (RTPControl)ds.getControl("javax.media.rtp.RTPControl");
-		System.err.println("  - The previously unidentified stream ");
-		if (ctl != null)
-		    System.err.println("      " + ctl.getFormat());
-		System.err.println("      had now been identified as sent by: " + participant.getCNAME());
-	     }
-	}
+    		} catch (Exception e) {
+    			System.err.println("NewReceiveStreamEvent exception " + e.getMessage());
+    			return;
+    		}
+
+    	}
+
+    	else if (evt instanceof StreamMappedEvent) {
+
+    		if (stream != null && stream.getDataSource() != null) {
+    			DataSource ds = stream.getDataSource();
+    			// Find out the formats.
+    			RTPControl ctl = (RTPControl)ds.getControl("javax.media.rtp.RTPControl");
+    			System.err.println("  - The previously unidentified stream ");
+    			if (ctl != null)
+    				System.err.println("      " + ctl.getFormat());
+    			System.err.println("      had now been identified as sent by: " + participant.getCNAME());
+    		}
+    	}
 
 	else if (evt instanceof ByeEvent) {
 
@@ -467,22 +469,22 @@ public class AVReceive2 implements ReceiveStreamListener, SessionListener, 	Cont
 
 
     public static void main(String argv[]) {
-	if (argv.length == 0)
-	    prUsage();
-
-	AVReceive2 avReceive = new AVReceive2(argv);
-	if (!avReceive.initialize()) {
-	    System.err.println("Failed to initialize the sessions.");
-	    System.exit(-1);
-	}
-
-	// Check to see if AVReceive2 is done.
-	try {
-	    while (!avReceive.isDone())
-		Thread.sleep(1000);
-	} catch (Exception e) {}
-
-	System.err.println("Exiting AVReceive2");
+//    	if (argv.length == 0)
+//    		prUsage();
+//
+//    	AVReceive2 avReceive = new AVReceive2(argv);
+//    	if (!avReceive.initialize()) {
+//    		System.err.println("Failed to initialize the sessions.");
+//    		System.exit(-1);
+//    	}
+//
+//    	// Check to see if AVReceive2 is done.
+//    	try {
+//    		while (!avReceive.isDone())
+//    			Thread.sleep(1000);
+//    	} catch (Exception e) {}
+//
+//    	System.err.println("Exiting AVReceive2");
     }
 
 

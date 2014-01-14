@@ -1,4 +1,4 @@
-package com.stubborneagle.AudioVideoFromWebcam;
+package com.stubborneagle.videoStreamSample;
 /*
  * @(#)AVTransmit2.java	1.4 01/03/13
  *
@@ -41,6 +41,8 @@ import javax.media.control.TrackControl;
 import javax.media.control.QualityControl;
 import javax.media.rtp.*;
 import javax.media.rtp.rtcp.*;
+
+import com.stubborneagle.AudioVideoFromWebcam.Stdout;
 import com.sun.media.rtp.*;
 
 public class AVTransmit2 {
@@ -48,7 +50,8 @@ public class AVTransmit2 {
     // Input MediaLocator
     // Can be a file or http or capture source
     private MediaLocator locator;
-    private String ipAddress;
+    private String ipAddressLocal;
+    private String ipAddressRemote;
     private int portBase;
 
     private Processor processor = null;
@@ -57,12 +60,14 @@ public class AVTransmit2 {
     private DataSource dataOutput = null;
     
     public AVTransmit2(MediaLocator locator,
-			 String ipAddress,
+    		 String ipAddressLoc,
+			 String ipAddressRem,
 			 String pb,
 			 Format format) {
 	
 	this.locator = locator;
-	this.ipAddress = ipAddress;
+	this.ipAddressLocal = ipAddressLoc;
+	this.ipAddressRemote = ipAddressRem;
 	Integer integer = Integer.valueOf(pb);
 	if (integer != null)
 	    this.portBase = integer.intValue();
@@ -265,20 +270,12 @@ public class AVTransmit2 {
 	for (int i = 0; i < pbss.length; i++) {
 	    try {
 		rtpMgrs[i] = RTPManager.newInstance();	    
-
-		// The local session address will be created on the
-		// same port as the the target port. This is necessary
-		// if you use AVTransmit2 in conjunction with JMStudio.
-		// JMStudio assumes -  in a unicast session - that the
-		// transmitter transmits from the same port it is receiving
-		// on and sends RTCP Receiver Reports back to this port of
-		// the transmitting host.
 		
 		port = portBase + 2*i;
-		ipAddr = InetAddress.getByName(ipAddress);
+		ipAddr = InetAddress.getByName(ipAddressRemote);
 
 		//localAddr = new SessionAddress( InetAddress.getLocalHost(),	port);
-		localAddr = new SessionAddress( new InetSocketAddress("192.168.120.1", 52040).getAddress(),	port); 
+		localAddr = new SessionAddress( new InetSocketAddress(ipAddressLocal, port).getAddress(),	port); 
 		
 		destAddr = new SessionAddress( ipAddr, port);
 
@@ -286,7 +283,7 @@ public class AVTransmit2 {
 		
 		rtpMgrs[i].addTarget( destAddr);
 		
-		System.err.println( "Created RTP session: " + ipAddress + " " + port);
+		System.err.println( "Created RTP session: " + ipAddressRemote + " " + port);
 		
 		sendStream = rtpMgrs[i].createSendStream(dataOutput, i);		
 		sendStream.start();
@@ -468,17 +465,17 @@ public class AVTransmit2 {
 	int i = 0;
 
 	// Create a audio transmit object with the specified params.
-	AVTransmit2 at = new AVTransmit2(new MediaLocator(args[i]),
-					     args[i+1], args[i+2], fmt);
+	//AVTransmit2 at = new AVTransmit2(new MediaLocator(args[i]),
+	//				     args[i+1], args[i+2], fmt);
 	// Start the transmission
-	String result = at.start();
+	//String result = at.start();
 
 	// result will be non-null if there was an error. The return
 	// value is a String describing the possible error. Print it.
-	if (result != null) {
-	    System.err.println("Error : " + result);
-	    System.exit(0);
-	}
+//	if (result != null) {
+//	    System.err.println("Error : " + result);
+//	    System.exit(0);
+//	}
 	
 	System.err.println("Start transmission for 60 seconds...");
 
@@ -494,7 +491,7 @@ public class AVTransmit2 {
 	}
 
 	// Stop the transmission
-	at.stop();
+	//at.stop();
 	
 	System.err.println("...transmission ended.");
 
