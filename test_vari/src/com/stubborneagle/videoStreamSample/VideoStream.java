@@ -266,32 +266,24 @@ public class VideoStream extends javax.swing.JFrame
 
 		vt = new AVTransmit2(null, comboBox.getSelectedItem().toString(),ipAddr.getText(), prt, null);
 		
-		capsendBtn.setEnabled(false);
-		cancelBtn.setEnabled(true);
-		String result = vt.start();
-		// result will be non-null if there was an error. The return
-		// value is a String describing the possible error. Print it.
-		if (result != null) {
-			System.err.println("Error : " + result);
-			System.exit(0);
-		}
-		try {
-			Thread.currentThread().sleep(60000);
-		} catch (InterruptedException ie) {
-		}
-
-		// Stop the transmission
-		vt.stop();
-		
 		// Start the transmission
 		new Thread()
 		{
 			public void run() {
-
+				capsendBtn.setEnabled(false);
+				cancelBtn.setEnabled(true);
+				String result = vt.start();
+				// result will be non-null if there was an error. The return
+				// value is a String describing the possible error. Print it.
+				if (result != null) {
+					System.err.println("Error : " + result);
+					System.exit(0);
+				}
+				System.err.println("Start transmission for 60 seconds...");
 			}
 		}.start();
 
-
+		
 	}
 
 	void cancelBtn_ActionPerformed(java.awt.event.ActionEvent event) throws InterruptedException
@@ -299,6 +291,7 @@ public class VideoStream extends javax.swing.JFrame
 	    // Stop the transmission
 		if(capsendBtn.isEnabled() == true) return;
 		vt.stop();
+		System.err.println("...transmission ended.");
 		Thread.sleep(1000);
 		capsendBtn.setEnabled(true);
 		cancelBtn.setEnabled(false);

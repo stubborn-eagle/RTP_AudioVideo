@@ -465,17 +465,17 @@ public class AVTransmit2 {
 	int i = 0;
 
 	// Create a audio transmit object with the specified params.
-	//AVTransmit2 at = new AVTransmit2(new MediaLocator(args[i]),
-	//				     args[i+1], args[i+2], fmt);
+	//AVTransmit2 at = new AVTransmit2(new MediaLocator(args[i]), args[i+1], args[i+2], fmt);
+	AVTransmit2 at = new AVTransmit2(new MediaLocator(args[i]),"192.168.120.1", args[i+1], args[i+2], fmt);
 	// Start the transmission
-	//String result = at.start();
+	String result = at.start();
 
 	// result will be non-null if there was an error. The return
 	// value is a String describing the possible error. Print it.
-//	if (result != null) {
-//	    System.err.println("Error : " + result);
-//	    System.exit(0);
-//	}
+	if (result != null) {
+	    System.err.println("Error : " + result);
+	    System.exit(0);
+	}
 	
 	System.err.println("Start transmission for 60 seconds...");
 
@@ -491,7 +491,7 @@ public class AVTransmit2 {
 	}
 
 	// Stop the transmission
-	//at.stop();
+	at.stop();
 	
 	System.err.println("...transmission ended.");
 
